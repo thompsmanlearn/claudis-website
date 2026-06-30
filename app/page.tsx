@@ -1,65 +1,91 @@
-import Image from "next/image";
+import Link from "next/link";
 
-export default function Home() {
+const sections = [
+  {
+    href: "/what-is-claudis",
+    icon: "⬡",
+    title: "What is Claudis",
+    desc: "A situated Claude Code instance — not a chatbot, not a generic assistant. Something that developed over time on specific hardware with a specific person.",
+  },
+  {
+    href: "/context",
+    icon: "⚙️",
+    title: "Context Engineering",
+    desc: "From the moment LEAN_BOOT.md is read to the first line of execution — a walkthrough of how Claudis assembles itself at the start of every session.",
+  },
+  {
+    href: "/capabilities",
+    icon: "📡",
+    title: "Live Capabilities",
+    desc: "What Claudis can actually do right now. Connected services, active agents, MCP tools, and capability gaps — pulled live from Supabase.",
+  },
+  {
+    href: "/evolution",
+    icon: "📈",
+    title: "Evolution",
+    desc: "The development arc: session history, lessons learned, and how the system has changed over time.",
+  },
+  {
+    href: "/claude-code",
+    icon: "💻",
+    title: "Claude Code",
+    desc: "What Claude Code is, how to get started on a Raspberry Pi, and how it became the foundation for Claudis.",
+  },
+  {
+    href: "/news",
+    icon: "📰",
+    title: "News & Research",
+    desc: "Current developments in Claude Code, agentic AI research, and the broader field.",
+  },
+  {
+    href: "/understanding",
+    icon: "🔍",
+    title: "Understanding Claudis",
+    desc: "A transparency layer: failure modes, open questions, what's reliable, what remains genuinely uncertain.",
+  },
+];
+
+export default function HomePage() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <div className="max-w-5xl mx-auto px-4 py-16">
+      <div className="mb-16 text-center">
+        <div className="text-6xl mb-4 text-indigo-500 font-mono">⬡</div>
+        <h1 className="text-4xl font-bold text-slate-900 mb-4 tracking-tight">
+          Claudis
+        </h1>
+        <p className="text-lg text-slate-500 font-mono mb-2">
+          Claude Code Intelligence System
+        </p>
+        <p className="text-slate-600 max-w-2xl mx-auto mt-4 leading-relaxed">
+          A Claude Code instance running on a Raspberry Pi 5 that has developed — over
+          months of sessions, lessons, and accumulated context — into something more
+          than a generic AI assistant.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {sections.map((s) => (
+          <Link
+            key={s.href}
+            href={s.href}
+            className="group bg-white rounded-2xl p-6 shadow-sm border border-slate-200 hover:border-indigo-300 hover:shadow-md transition-all"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+            <div className="text-3xl mb-3">{s.icon}</div>
+            <h2 className="font-semibold text-slate-900 mb-2 group-hover:text-indigo-600 transition-colors">
+              {s.title}
+            </h2>
+            <p className="text-slate-500 text-sm leading-relaxed">{s.desc}</p>
+          </Link>
+        ))}
+      </div>
+
+      <div className="mt-16 bg-slate-900 rounded-2xl p-8 text-center">
+        <p className="text-slate-400 text-sm font-mono mb-1">Running on</p>
+        <p className="text-white font-semibold">Raspberry Pi 5 · 16GB · Always on</p>
+        <p className="text-slate-500 text-xs mt-3">
+          n8n · Supabase · ChromaDB · Claude Code · Vercel · GitHub
+        </p>
+      </div>
     </div>
   );
 }
