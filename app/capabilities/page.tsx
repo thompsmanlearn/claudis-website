@@ -22,22 +22,21 @@ interface SystemConfig {
   value: string;
 }
 
-const SERVICES = [
-  { name: "GitHub", what: "Read/write repos, push commits, manage branches", key: "GITHUB_TOKEN" },
-  { name: "n8n", what: "Create, update, activate/deactivate workflows, read execution history", key: "N8N_API_KEY" },
-  { name: "Supabase", what: "Full CRUD on all tables, DDL via Management API, RLS management", key: "SUPABASE_SERVICE_KEY" },
-  { name: "ChromaDB", what: "Semantic search and storage across lessons_learned, session_memory, reference_material", key: "local" },
-  { name: "Anthropic API", what: "Claude Sonnet 4.6 (primary), Haiku 4.5 (grader/evaluator), prompt caching", key: "ANTHROPIC_API_KEY" },
-  { name: "Telegram", what: "Send messages to Bill, receive commands via Telegram Command Agent", key: "TELEGRAM_BOT_TOKEN" },
-  { name: "Vercel", what: "Deploy sites via Git push (meow-now, claudis-website auto-deploy on push)", key: "via git" },
-  { name: "Gemini API", what: "Query expansion, relevance screening, research synthesis (deep research pipeline)", key: "GEMINI_API_KEY" },
-  { name: "YouTube Data API", what: "Fetch funny cat videos for Meow Now /videos page", key: "YOUTUBE_API_KEY" },
-  { name: "NewsAPI", what: "Cat news and research articles for Meow Now /news page", key: "NEWS_API_KEY" },
-  { name: "Brave Search", what: "Web search for Workpad research pipeline", key: "BRAVE_API_KEY" },
-  { name: "Tavily", what: "Deep web search for Workpad research pipeline", key: "TAVILY_API_KEY" },
-  { name: "Wikimedia", what: "Wikipedia pageviews + article summaries for Meow Now /wiki page (no key — public API)", key: "none" },
-  { name: "Anvil", what: "Dashboard UI (Home/Workpad/Projects/System tabs), uplink server via websocket", key: "via uplink" },
-];
+interface ConnectedService {
+  name: string;
+  description: string;
+  key_type: string;
+  category: string;
+  active: boolean;
+}
+
+function keyTypeLabel(key_type: string): string {
+  if (key_type === "none") return "no key required";
+  if (key_type === "local") return "local service";
+  if (key_type === "via_git") return "via git";
+  if (key_type === "via_websocket") return "via websocket";
+  return "✓ key configured";
+}
 
 function timeAgo(iso: string) {
   const secs = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
@@ -47,10 +46,11 @@ function timeAgo(iso: string) {
 }
 
 export default async function CapabilitiesPage() {
-  const [agents, capabilities, configRows] = await Promise.all([
+  const [agents, capabilities, configRows, services] = await Promise.all([
     sbFetch("agent_registry", { select: "agent_name,status,workflow_id,description,updated_at", order: "agent_name.asc" }, 60) as Promise<Agent[]>,
     sbFetch("capabilities", { select: "name,description,category,times_used", order: "times_used.desc" }, 60) as Promise<Capability[]>,
     sbFetch("system_config", { select: "key,value", "key": "in.(claudis_current_task,claudis_heartbeat_at)" }, 60) as Promise<SystemConfig[]>,
+    sbFetch("connected_services", { select: "name,description,key_type,category,active", active: "eq.true", order: "category.asc,name.asc" }, 60) as Promise<ConnectedService[]>,
   ]);
 
   const activeAgents = agents.filter((a) => a.status === "active");
@@ -62,6 +62,12 @@ export default async function CapabilitiesPage() {
     const cat = c.category ?? "other";
     if (!acc[cat]) acc[cat] = [];
     acc[cat].push(c);
+    return acc;
+  }, {});
+
+  const servicesByCategory = services.reduce<Record<string, ConnectedService[]>>((acc, s) => {
+    if (!acc[s.category]) acc[s.category] = [];
+    acc[s.category].push(s);
     return acc;
   }, {});
 
@@ -89,6 +95,10 @@ export default async function CapabilitiesPage() {
           <p className="text-white font-mono text-xs">{activeAgents.length}</p>
         </div>
         <div>
+          <p className="text-slate-500 text-xs mb-1">Connected services</p>
+          <p className="text-white font-mono text-xs">{services.length}</p>
+        </div>
+        <div>
           <p className="text-slate-500 text-xs mb-1">Capabilities logged</p>
           <p className="text-white font-mono text-xs">{capabilities.length}</p>
         </div>
@@ -97,20 +107,29 @@ export default async function CapabilitiesPage() {
       {/* Connected services */}
       <section className="mb-12">
         <h2 className="text-xl font-semibold text-slate-800 mb-4">Connected Services</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {SERVICES.map((s) => (
-            <div key={s.name} className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex gap-3">
-              <div className={`w-2 rounded-full self-stretch ${s.key === "none" ? "bg-slate-300" : "bg-green-400"}`} />
-              <div>
-                <p className="font-semibold text-slate-800 text-sm">{s.name}</p>
-                <p className="text-slate-500 text-xs leading-relaxed mt-0.5">{s.what}</p>
-                <p className="text-slate-400 text-xs mt-1 font-mono">
-                  {s.key === "none" ? "no key required" : s.key === "local" ? "local service" : s.key === "via git" ? "via git" : s.key === "via uplink" ? "via websocket" : "✓ key configured"}
-                </p>
+        {services.length === 0 ? (
+          <p className="text-slate-400 text-sm">Loading services…</p>
+        ) : (
+          <div className="space-y-6">
+            {Object.entries(servicesByCategory).map(([cat, catServices]) => (
+              <div key={cat}>
+                <h3 className="text-xs font-mono text-indigo-600 uppercase tracking-wide mb-3">{cat}</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {catServices.map((s) => (
+                    <div key={s.name} className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex gap-3">
+                      <div className={`w-2 rounded-full self-stretch ${s.key_type === "none" ? "bg-slate-300" : "bg-green-400"}`} />
+                      <div>
+                        <p className="font-semibold text-slate-800 text-sm">{s.name}</p>
+                        <p className="text-slate-500 text-xs leading-relaxed mt-0.5">{s.description}</p>
+                        <p className="text-slate-400 text-xs mt-1 font-mono">{keyTypeLabel(s.key_type)}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Active agents */}
