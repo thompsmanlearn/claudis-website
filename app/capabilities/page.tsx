@@ -5,7 +5,6 @@ import { sbFetch } from "@/lib/supabase";
 interface Agent {
   agent_name: string;
   status: string;
-  workflow_id: string | null;
   description: string | null;
   updated_at: string;
 }
@@ -24,18 +23,8 @@ interface SystemConfig {
 
 interface ConnectedService {
   name: string;
-  description: string;
-  key_type: string;
   category: string;
   active: boolean;
-}
-
-function keyTypeLabel(key_type: string): string {
-  if (key_type === "none") return "no key required";
-  if (key_type === "local") return "local service";
-  if (key_type === "via_git") return "via git";
-  if (key_type === "via_websocket") return "via websocket";
-  return "✓ key configured";
 }
 
 function timeAgo(iso: string) {
@@ -47,10 +36,10 @@ function timeAgo(iso: string) {
 
 export default async function CapabilitiesPage() {
   const [agents, capabilities, configRows, services] = await Promise.all([
-    sbFetch("agent_registry", { select: "agent_name,status,workflow_id,description,updated_at", order: "agent_name.asc" }, 60) as Promise<Agent[]>,
-    sbFetch("capabilities", { select: "name,description,category,times_used", order: "times_used.desc" }, 60) as Promise<Capability[]>,
+    sbFetch("agent_registry", { select: "agent_name,status,description,updated_at", order: "agent_name.asc" }, 60) as Promise<Agent[]>,
+    sbFetch("capabilities", { select: "name,description,category,times_used", times_used: "gt.0", order: "times_used.desc" }, 60) as Promise<Capability[]>,
     sbFetch("system_config", { select: "key,value", "key": "in.(claudis_current_task,claudis_heartbeat_at)" }, 60) as Promise<SystemConfig[]>,
-    sbFetch("connected_services", { select: "name,description,key_type,category,active", active: "eq.true", order: "category.asc,name.asc" }, 60) as Promise<ConnectedService[]>,
+    sbFetch("connected_services", { select: "name,category,active", active: "eq.true", order: "category.asc,name.asc" }, 60) as Promise<ConnectedService[]>,
   ]);
 
   const activeAgents = agents.filter((a) => a.status === "active");
@@ -76,7 +65,7 @@ export default async function CapabilitiesPage() {
       <div className="mb-10">
         <h1 className="text-3xl font-bold text-slate-900 mb-2">Live Capabilities</h1>
         <p className="text-slate-500">
-          What Claudis can actually do right now — pulled live from Supabase. Updates every 60 seconds.
+          What Claudis can actually do right now — pulled live from the system. Updates every 60 seconds.
         </p>
       </div>
 
@@ -99,14 +88,17 @@ export default async function CapabilitiesPage() {
           <p className="text-white font-mono text-xs">{services.length}</p>
         </div>
         <div>
-          <p className="text-slate-500 text-xs mb-1">Capabilities logged</p>
+          <p className="text-slate-500 text-xs mb-1">Capabilities exercised</p>
           <p className="text-white font-mono text-xs">{capabilities.length}</p>
         </div>
       </div>
 
       {/* Connected services */}
       <section className="mb-12">
-        <h2 className="text-xl font-semibold text-slate-800 mb-4">Connected Services</h2>
+        <h2 className="text-xl font-semibold text-slate-800 mb-2">Connected Services</h2>
+        <p className="text-slate-500 text-sm mb-5">
+          External services and tools Claudis has live connections to.
+        </p>
         {services.length === 0 ? (
           <p className="text-slate-400 text-sm">Loading services…</p>
         ) : (
@@ -114,16 +106,15 @@ export default async function CapabilitiesPage() {
             {Object.entries(servicesByCategory).map(([cat, catServices]) => (
               <div key={cat}>
                 <h3 className="text-xs font-mono text-indigo-600 uppercase tracking-wide mb-3">{cat}</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="flex flex-wrap gap-2">
                   {catServices.map((s) => (
-                    <div key={s.name} className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex gap-3">
-                      <div className={`w-2 rounded-full self-stretch ${s.key_type === "none" ? "bg-slate-300" : "bg-green-400"}`} />
-                      <div>
-                        <p className="font-semibold text-slate-800 text-sm">{s.name}</p>
-                        <p className="text-slate-500 text-xs leading-relaxed mt-0.5">{s.description}</p>
-                        <p className="text-slate-400 text-xs mt-1 font-mono">{keyTypeLabel(s.key_type)}</p>
-                      </div>
-                    </div>
+                    <span
+                      key={s.name}
+                      className="inline-flex items-center gap-1.5 bg-white border border-slate-200 rounded-full px-3 py-1 text-sm text-slate-700 shadow-sm"
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block" />
+                      {s.name}
+                    </span>
                   ))}
                 </div>
               </div>
@@ -141,12 +132,7 @@ export default async function CapabilitiesPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {activeAgents.map((a) => (
               <div key={a.agent_name} className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-                <div className="flex items-center justify-between mb-1">
-                  <p className="font-mono text-sm font-semibold text-slate-800">{a.agent_name}</p>
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${a.workflow_id ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}`}>
-                    {a.workflow_id ? "wired" : "no workflow"}
-                  </span>
-                </div>
+                <p className="font-mono text-sm font-semibold text-slate-800 mb-1">{a.agent_name}</p>
                 {a.description && <p className="text-slate-500 text-xs leading-relaxed">{a.description}</p>}
                 <p className="text-slate-400 text-xs mt-2">updated {timeAgo(a.updated_at)}</p>
               </div>
@@ -157,9 +143,9 @@ export default async function CapabilitiesPage() {
 
       {/* Capabilities by category */}
       <section>
-        <h2 className="text-xl font-semibold text-slate-800 mb-4">Capability Inventory</h2>
+        <h2 className="text-xl font-semibold text-slate-800 mb-2">Capability Inventory</h2>
         <p className="text-slate-500 text-sm mb-6">
-          Logged capabilities with usage counts — how often each has been exercised across sessions.
+          Capabilities exercised at least once across sessions, with usage counts.
         </p>
         {Object.entries(capByCategory).map(([cat, caps]) => (
           <div key={cat} className="mb-8">

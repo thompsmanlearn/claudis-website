@@ -6,20 +6,20 @@ const steps = [
   {
     n: 1,
     title: "Git pull on claudis/",
-    why: "Ensures directives are current before anything else loads. If the pull fails, Claudis telegrams Bill and stops — stale directives are worse than no session.",
+    why: "Ensures directives are current before anything else loads. If the pull fails, Claudis telegrams the operator and stops — stale directives are worse than no session.",
     what: "Checks GitHub for new commits. The claudis/ repo is the source of truth for all context files.",
   },
   {
     n: 1.5,
-    title: "Boot heartbeat → Supabase",
-    why: "Writes claudis_current_task and claudis_heartbeat_at to system_config. The system knows a session is alive.",
-    what: "First line of the first DIRECTIVES.md is written to Supabase so external systems (Anvil dashboard, Telegram) can see what Claudis is working on.",
+    title: "Boot heartbeat",
+    why: "Records that a session is alive. The dashboard and notification channels can see what Claudis is working on.",
+    what: "Session state is written to the system so external tools can display current status.",
   },
   {
     n: 2,
     title: "Read DIRECTIVES.md",
     why: "Establishes the session goal before loading any other context. Everything that follows is shaped by what the directive says.",
-    what: "A single file that Bill edits to direct the session. May reference a backlog card (Run: B-NNN) or be a project node with a UUID.",
+    what: "A single file that the operator edits to direct the session. May reference a backlog card or be a project node.",
   },
   {
     n: 3,
@@ -35,45 +35,45 @@ const steps = [
   },
   {
     n: 4.5,
-    title: "Check Bill input channel",
-    why: "Bill can submit questions, comments, or commands to Supabase between sessions. Checked here so his input shapes the session before execution begins.",
-    what: "Queries bill_input table. Commands replace DIRECTIVES.md for the session. Questions get answered. Comments become lessons.",
+    title: "Check operator input channel",
+    why: "The operator can submit questions, comments, or commands between sessions. Checked here so input shapes the session before execution begins.",
+    what: "Commands can redirect the session goal. Questions get answered. Comments become lessons.",
   },
   {
     n: 5,
     title: "Stale card check + design review check",
-    why: "Before any work begins, verify the directive isn't already complete. Also check if this card creates a new agent/table/pattern — those require two-pass review.",
-    what: "Reads acceptance criteria from aadp_project_nodes or BACKLOG.md, checks actual system state. Stops and telegrams Bill if stale or review-required.",
+    why: "Before any work begins, verify the directive isn't already complete. Also check if this card creates a new agent, table, or pattern — those require two-pass review.",
+    what: "Reads acceptance criteria from the project backlog and checks actual system state. Stops and notifies the operator if stale or review-required.",
   },
   {
     n: 6,
-    title: "Skills resolution via stats server",
-    why: "Loads only the skills relevant to this directive. Confidence threshold ≥ 0.6. Keeps context lean — irrelevant skill files are not loaded.",
-    what: "POST to localhost:9100/resolve_skills with directive text. Returns skill names and confidence scores. Each matched skill's SKILL.md is then read.",
+    title: "Skills resolution",
+    why: "Loads only the skills relevant to this directive. Keeps context lean — irrelevant skill files are not loaded.",
+    what: "A local service resolves which skills match the directive text, applying a confidence threshold. Each matched skill's documentation is then read.",
   },
   {
     n: 7,
     title: "Read CONTEXT.md + TRAJECTORY.md",
-    why: "System facts (hardware, services, credentials location) and project arc (where we are, where we've been, what's next). The session's map and compass.",
-    what: "CONTEXT.md is stable facts. TRAJECTORY.md is updated every session close — it's the living record of the project's development.",
+    why: "System facts and project arc — where we are, where we have been, what is next. The session's map and compass.",
+    what: "CONTEXT.md is stable facts about the system. TRAJECTORY.md is updated every session close — it is the living record of the project's development.",
   },
   {
     n: 8,
     title: "Live state ping",
     why: "Grounds the session in actual system state rather than assumed state. Active agents, unresolved errors, pending tasks, hardware health.",
-    what: "mcp__aadp__system_status + Supabase query across agent_registry, error_logs, work_queue. Results appear in the boot summary.",
+    what: "A live query across system state checks what is actually running and what needs attention. Results appear in the boot summary.",
   },
   {
     n: 9,
     title: "Pending feedback scan",
     why: "Grader verdicts, annotations, and correction flags from prior sessions. Surface before execution so they can inform the work.",
-    what: "Queries agent_feedback WHERE processed = false. Grader FAILs on prior nodes appear here — the session sees them and can course-correct.",
+    what: "Queries the feedback store for unprocessed annotations. Grader failures on prior work appear here — the session sees them and can course-correct.",
   },
   {
     n: 10,
     title: "Lesson retrieval",
-    why: "What has Claudis learned that's relevant to this specific task? Injected before execution so past failures shape current behavior.",
-    what: "POST to localhost:9100/inject_context_v3. Returns semantically matched lessons from ChromaDB lessons_learned collection, ranked by distance.",
+    why: "What has Claudis learned that is relevant to this specific task? Injected before execution so past failures shape current behavior.",
+    what: "A semantic search across the lessons store returns the most relevant past learnings, ranked by closeness to the current directive.",
   },
   {
     n: 11,
@@ -84,7 +84,6 @@ const steps = [
 ];
 
 export default async function ContextPage() {
-  // Pull a real recent lesson as a live example
   let sampleLesson: { title: string; content: string } | null = null;
   try {
     const lessons = await sbFetch(
@@ -107,7 +106,7 @@ export default async function ContextPage() {
           right information in the right order before any work begins.
         </p>
         <p className="text-slate-500 mt-3">
-          This is what happens between Bill typing a session goal and Claudis executing the first action.
+          This is what happens between the operator setting a session goal and Claudis executing the first action.
         </p>
       </div>
 
@@ -139,12 +138,12 @@ export default async function ContextPage() {
             Live example: most recent lesson injection
           </h2>
           <p className="text-slate-500 text-sm mb-4">
-            This is the most recently written lesson in Claudis&apos;s lessons_learned store.
+            This is the most recently written lesson in Claudis&apos;s lesson store.
             A lesson like this would be injected at step 10 if semantically relevant to the session directive.
           </p>
           <div className="bg-slate-900 rounded-xl p-6">
             <p className="text-indigo-400 text-xs font-mono mb-2 uppercase tracking-wide">
-              lessons_learned · most recent
+              lessons store · most recent
             </p>
             <p className="text-white font-semibold mb-3">{sampleLesson.title}</p>
             <p className="text-slate-300 text-sm leading-relaxed">
@@ -159,7 +158,7 @@ export default async function ContextPage() {
         <h3 className="font-semibold text-indigo-800 mb-2">The session loop</h3>
         <p className="text-indigo-700 text-sm leading-relaxed">
           Context engineering doesn&apos;t stop at session start. At close, Claudis writes
-          lessons to ChromaDB and Supabase, updates TRAJECTORY.md, commits session
+          lessons to memory, updates the project trajectory, commits session
           artifacts, and writes a handoff note. Those artifacts become the context
           for the next session. Each session makes the next one smarter.
         </p>

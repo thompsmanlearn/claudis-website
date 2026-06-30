@@ -40,37 +40,37 @@ export default async function UnderstandingPage() {
 
   const failureModes = [
     {
-      title: "Grader artifact truncation",
+      title: "Evaluation artifact truncation",
       status: "resolved",
-      desc: "The /grade_card endpoint reads only the first 6000 chars of a session artifact. Content beyond that is invisible to the grader. Lesson written 2026-06-30: keep artifacts under 6000 chars or front-load all evidence.",
+      desc: "The grader reads only a limited portion of each session artifact. Evidence beyond that limit is invisible to the evaluator. Fix: keep evidence front-loaded and artifacts concise. Lesson written and applied.",
     },
     {
       title: "Stale-card false detection",
       status: "ongoing",
-      desc: "Claudis sometimes concludes a directive is already complete when the evidence is ambiguous. The grader catches this — but it burns a session. The fix is better stale-card verification before declaring done.",
+      desc: "Claudis sometimes concludes a directive is already complete when the evidence is ambiguous. The grader catches this — but it burns a session. The fix is better verification before declaring done.",
     },
     {
-      title: "Webhook 404 after n8n activation",
+      title: "Webhook timing after workflow activation",
       status: "known",
-      desc: "Newly activated n8n workflows return 404 until n8n restarts (docker restart n8n). Lesson written. Applied reliably since documentation.",
+      desc: "Newly activated automation workflows can take time to become reachable after activation. A service restart resolves it. Lesson written and applied reliably since.",
     },
     {
       title: "Haiku prompt caching silence",
       status: "known",
-      desc: "Haiku 4.5 silently ignores cache_control — returns cache_creation_input_tokens: 0 with no error. Don't attempt prompt caching with Haiku.",
+      desc: "Haiku 4.5 silently ignores cache_control with no error. The API returns zero cache tokens without indicating why. Don't attempt prompt caching with Haiku.",
     },
     {
-      title: "n8n empty array branch death",
+      title: "Empty array branch termination",
       status: "known",
-      desc: "Empty arrays in n8n Code nodes silently kill downstream branches. Fix: normalize/guard node returning a sentinel item when input is empty.",
+      desc: "Empty arrays in automation workflow code nodes can silently terminate downstream execution branches. Fix: normalize data before passing downstream, or return a sentinel value when input is empty.",
     },
   ];
 
   const openQuestions = [
-    "Does lesson retrieval actually change behavior, or does it feel like it does? The inject_context mechanism increments times_applied but we have no direct measure of lesson influence on output.",
+    "Does lesson retrieval actually change behavior, or does it feel like it does? The lesson store tracks how often each entry is applied but there is no direct measure of its influence on output quality.",
     "Is the close-session discipline consistent enough to trust the lesson store? If sessions close without writing lessons, the store drifts from actual system knowledge.",
-    "What is the right balance between context richness and context window pressure? LEAN_BOOT.md has grown significantly — at what point does boot context crowd out working memory?",
-    "Are the three prior grader FAILs (5939bc2b ×2, 3c1d70dd ×1) on obsolete nodes, or do they represent real quality gaps worth revisiting?",
+    "What is the right balance between context richness and context window pressure? The boot sequence has grown significantly — at what point does boot context crowd out working memory?",
+    "Do prior grader failures represent real quality gaps worth revisiting, or were they on work that has since been superseded?",
   ];
 
   return (
