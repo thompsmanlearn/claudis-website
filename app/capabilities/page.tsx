@@ -23,8 +23,18 @@ interface SystemConfig {
 
 interface ConnectedService {
   name: string;
+  description: string | null;
+  key_type: string;
   category: string;
   active: boolean;
+}
+
+function keyTypeLabel(key_type: string): string {
+  if (key_type === "none") return "no key required";
+  if (key_type === "local") return "local service";
+  if (key_type === "via_git") return "via git";
+  if (key_type === "via_websocket") return "via websocket";
+  return "key configured";
 }
 
 function timeAgo(iso: string) {
@@ -39,7 +49,7 @@ export default async function CapabilitiesPage() {
     sbFetch("agent_registry", { select: "agent_name,status,description,updated_at", order: "agent_name.asc" }, 60) as Promise<Agent[]>,
     sbFetch("capabilities", { select: "name,description,category,times_used", times_used: "gt.0", order: "times_used.desc" }, 60) as Promise<Capability[]>,
     sbFetch("system_config", { select: "key,value", "key": "in.(claudis_current_task,claudis_heartbeat_at)" }, 60) as Promise<SystemConfig[]>,
-    sbFetch("connected_services", { select: "name,category,active", active: "eq.true", order: "category.asc,name.asc" }, 60) as Promise<ConnectedService[]>,
+    sbFetch("connected_services", { select: "name,description,key_type,category,active", active: "eq.true", order: "category.asc,name.asc" }, 60) as Promise<ConnectedService[]>,
   ]);
 
   const activeAgents = agents.filter((a) => a.status === "active");
@@ -106,15 +116,21 @@ export default async function CapabilitiesPage() {
             {Object.entries(servicesByCategory).map(([cat, catServices]) => (
               <div key={cat}>
                 <h3 className="text-xs font-mono text-indigo-600 uppercase tracking-wide mb-3">{cat}</h3>
-                <div className="flex flex-wrap gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {catServices.map((s) => (
-                    <span
+                    <div
                       key={s.name}
-                      className="inline-flex items-center gap-1.5 bg-white border border-slate-200 rounded-full px-3 py-1 text-sm text-slate-700 shadow-sm"
+                      className="bg-white border border-slate-200 rounded-xl px-4 py-3 shadow-sm"
                     >
-                      <span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block" />
-                      {s.name}
-                    </span>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block shrink-0" />
+                        <span className="font-medium text-slate-800 text-sm">{s.name}</span>
+                        <span className="ml-auto text-xs font-mono text-slate-400">{keyTypeLabel(s.key_type)}</span>
+                      </div>
+                      {s.description && (
+                        <p className="text-slate-500 text-xs leading-relaxed pl-3.5">{s.description}</p>
+                      )}
+                    </div>
                   ))}
                 </div>
               </div>

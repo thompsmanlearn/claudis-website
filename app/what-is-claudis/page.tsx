@@ -15,7 +15,7 @@ const pillars = [
   },
   {
     title: "Directed",
-    body: "Autonomy is deliberately constrained. Bill directs; Claudis executes. The system is capable of more autonomous operation than it's given. That restraint is a choice, and it's part of what makes the system trustworthy.",
+    body: "Autonomy is deliberately constrained. The operator directs; Claudis executes. The system is capable of more autonomous operation than it's given. That restraint is a choice, and it's part of what makes the system trustworthy.",
   },
 ];
 

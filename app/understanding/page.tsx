@@ -42,7 +42,7 @@ export default async function UnderstandingPage() {
     {
       title: "Evaluation artifact truncation",
       status: "resolved",
-      desc: "The grader reads only a limited portion of each session artifact. Evidence beyond that limit is invisible to the evaluator. Fix: keep evidence front-loaded and artifacts concise. Lesson written and applied.",
+      desc: "The /grade_card endpoint reads only the first 6000 chars of each session artifact. Evidence beyond that limit is invisible to the evaluator. Fix: keep evidence front-loaded and artifacts concise. Lesson written and applied.",
     },
     {
       title: "Stale-card false detection",
@@ -52,7 +52,7 @@ export default async function UnderstandingPage() {
     {
       title: "Webhook timing after workflow activation",
       status: "known",
-      desc: "Newly activated automation workflows can take time to become reachable after activation. A service restart resolves it. Lesson written and applied reliably since.",
+      desc: "Newly activated n8n workflows can take time to register their webhooks. Fix: docker restart n8n after activation. Lesson written and applied reliably since.",
     },
     {
       title: "Haiku prompt caching silence",

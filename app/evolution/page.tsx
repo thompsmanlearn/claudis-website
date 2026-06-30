@@ -28,7 +28,7 @@ export default async function EvolutionPage() {
   const milestones = [
     { date: "Mar 2026", label: "Foundation", desc: "AADP scaffolded. n8n, Supabase, ChromaDB connected. First agents built." },
     { date: "Apr 2026", label: "Architecture", desc: "Claudis persona retired. CONTEXT/CONVENTIONS/TRAJECTORY docs established. Bootstrap context reduced 80%." },
-    { date: "May 2026", label: "Dashboard", desc: "Anvil UI built — Home, Workpad, Sessions, System tabs. Bill input channel live. Deep research pipeline with 7 sources." },
+    { date: "May 2026", label: "Dashboard", desc: "Anvil UI built — Home, Workpad, Sessions, System tabs. Operator input channel live. Deep research pipeline with 7 sources." },
     { date: "Jun 2026", label: "Quality gates", desc: "Grader-gated node completion. Projects tab. Error log indicator. Comment-driven cards. Three-way collaboration model." },
   ];
 
