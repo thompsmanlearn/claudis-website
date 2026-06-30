@@ -6,6 +6,7 @@ const nav = [
   { href: "/what-is-claudis", label: "What is Claudis" },
   { href: "/context", label: "Context Engineering" },
   { href: "/capabilities", label: "Capabilities" },
+  { href: "/control", label: "Control" },
   { href: "/evolution", label: "Evolution" },
   { href: "/claude-code", label: "Claude Code" },
   { href: "/news", label: "News & Research" },
