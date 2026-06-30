@@ -1,7 +1,5 @@
 export const revalidate = 3600;
 
-import { sbFetch } from "@/lib/supabase";
-
 const steps = [
   {
     n: 1,
@@ -83,19 +81,7 @@ const steps = [
   },
 ];
 
-export default async function ContextPage() {
-  let sampleLesson: { title: string; content: string } | null = null;
-  try {
-    const lessons = await sbFetch(
-      "lessons_learned",
-      { select: "title,content", order: "created_at.desc", limit: "1" },
-      3600
-    );
-    if (lessons.length > 0) sampleLesson = lessons[0];
-  } catch {
-    sampleLesson = null;
-  }
-
+export default function ContextPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-12">
       <div className="mb-12">
@@ -131,28 +117,6 @@ export default async function ContextPage() {
           ))}
         </div>
       </div>
-
-      {sampleLesson && (
-        <div className="mt-14">
-          <h2 className="text-xl font-semibold text-slate-800 mb-4">
-            Live example: most recent lesson injection
-          </h2>
-          <p className="text-slate-500 text-sm mb-4">
-            This is the most recently written lesson in Claudis&apos;s lesson store.
-            A lesson like this would be injected at step 10 if semantically relevant to the session directive.
-          </p>
-          <div className="bg-slate-900 rounded-xl p-6">
-            <p className="text-indigo-400 text-xs font-mono mb-2 uppercase tracking-wide">
-              lessons store · most recent
-            </p>
-            <p className="text-white font-semibold mb-3">{sampleLesson.title}</p>
-            <p className="text-slate-300 text-sm leading-relaxed">
-              {sampleLesson.content.slice(0, 500)}
-              {sampleLesson.content.length > 500 && "…"}
-            </p>
-          </div>
-        </div>
-      )}
 
       <div className="mt-12 bg-indigo-50 border border-indigo-200 rounded-xl p-6">
         <h3 className="font-semibold text-indigo-800 mb-2">The session loop</h3>
